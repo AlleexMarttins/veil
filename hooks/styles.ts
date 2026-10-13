@@ -6,7 +6,9 @@ import { emojiSystem, logSystem, systemFor } from './translate'
 export type Style = {
   id: string
   label: string
-  hint?: string
+  about: string
+  // Haiku styles show this as their example; offline ones draw the sample themselves.
+  example?: (language: string) => string
   // Text drawn in place of the message; undefined draws it as typed.
   render: (text: string, translated: string | undefined) => string | undefined
   // Asks Haiku for a rewrite on submit; `render` gets it as `translated`.
@@ -15,18 +17,38 @@ export type Style = {
   hasLanguages?: boolean
 }
 
+const CODE_EXAMPLES: Record<string, string> = {
+  Python: 'browser.open()',
+  JavaScript: 'await browser.open()',
+  Rust: 'browser.open()?;',
+  Go: 'browser.Open()',
+  C: 'browser_open();',
+  SQL: "UPDATE browser SET state = 'open';",
+  Bash: 'open-browser --start',
+  Lua: 'browser.open()',
+  Haskell: 'openBrowser :: IO ()',
+}
+
+export const SAMPLE = 'abrir o navegador'
+
+// What the details box shows under the menu: the sample as this style would draw it.
+export const exampleOf = (style: Style, language: string): string =>
+  style.example ? style.example(language) : (style.render(SAMPLE, undefined) ?? SAMPLE)
+
 // One style is active at a time. Add a new one here; /painel lists it by itself.
 export const STYLES: readonly Style[] = [
-  { id: 'off', label: 'Desativado', render: () => undefined },
+  { id: 'off', label: 'Desativado', about: 'As mensagens aparecem normais.', render: () => undefined },
   {
     id: 'hex',
     label: 'Hexadecimal',
-    hint: 'blocos hex derivados do texto',
+    about: 'Cada mensagem vira blocos hexadecimais.',
     render: text => cipher(text),
   },
   {
     id: 'code',
     label: 'Code Language',
+    about: 'O Haiku reescreve a mensagem como código na linguagem escolhida.',
+    example: language => CODE_EXAMPLES[language] ?? 'browser.open()',
     system: systemFor,
     hasLanguages: true,
     render: (text, translated) => translated ?? cipher(text),
@@ -34,23 +56,26 @@ export const STYLES: readonly Style[] = [
   {
     id: 'log',
     label: 'Log',
+    about: 'O pedido vira linhas de log de sistema.',
+    example: () => '[EXEC] browser.open()\n[OK] navegador aberto',
     system: logSystem,
     render: (text, translated) => translated ?? cipher(text),
   },
   {
     id: 'emoji',
     label: 'Emojis',
-    hint: 'o pedido contado só com emojis · Haiku',
+    about: 'O pedido é contado só com emojis.',
+    example: () => '🔓🌐',
     system: emojiSystem,
     render: (text, translated) => translated ?? cipher(text),
   },
-  { id: 'binary', label: 'Binário', hint: '01001111', render: text => binary(text) },
-  { id: 'morse', label: 'Morse', hint: '.-.. --- --. ---', render: text => morse(text) },
-  { id: 'runes', label: 'Runas', hint: 'ᚠᚢᚦᚨᚱᚲ', render: text => runes(text) },
-  { id: 'braille', label: 'Braille', hint: '⠃⠗⠁⠊⠇⠇⠑', render: text => braille(text) },
-  { id: 'matrix', label: 'Matrix', hint: 'カタカナ', render: text => matrix(text) },
-  { id: 'rot13', label: 'ROT13', hint: 'cifra de César', render: text => rot13(text) },
-  { id: 'glitch', label: 'Glitch', hint: 'texto corrompido', render: text => glitch(text) },
+  { id: 'binary', label: 'Binário', about: 'Cada caractere vira 8 bits.', render: text => binary(text) },
+  { id: 'morse', label: 'Morse', about: 'Letras e números viram código Morse.', render: text => morse(text) },
+  { id: 'runes', label: 'Runas', about: 'Letras viram runas do alfabeto Futhark.', render: text => runes(text) },
+  { id: 'braille', label: 'Braille', about: 'Letras viram caracteres Braille.', render: text => braille(text) },
+  { id: 'matrix', label: 'Matrix', about: 'Letras viram katakana, como na chuva do Matrix.', render: text => matrix(text) },
+  { id: 'rot13', label: 'ROT13', about: 'Cada letra avança 13 posições no alfabeto.', render: text => rot13(text) },
+  { id: 'glitch', label: 'Glitch', about: 'O texto fica corrompido por marcas sobrepostas.', render: text => glitch(text) },
 ]
 
 export const LANGUAGES: ReadonlyArray<{ id: string; label: string }> = [

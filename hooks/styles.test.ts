@@ -1,6 +1,6 @@
 import { test, expect } from 'claude-code/testing'
 
-import { langOf, parseSettings, styleOf } from './styles'
+import { SAMPLE, STYLES, exampleOf, langOf, parseSettings, styleOf } from './styles'
 
 const DEFAULT = { style: 'code', lang: 'python' }
 
@@ -26,4 +26,11 @@ test('off draws as typed, code uses the translation, no emoji', () => {
   expect(styleOf({ style: 'code' }).render('oi', 'print("oi")')).toBe('print("oi")')
   expect(styleOf({ style: 'code' }).render('oi', undefined)).toBe(styleOf({ style: 'hex' }).render('oi', undefined))
   expect(langOf({ lang: 'nope' }).id).toBe('python')
+})
+
+test('every style explains itself and shows an example', () => {
+  for (const s of STYLES) {
+    expect(s.about.length).toBeGreaterThan(5)
+    if (s.id !== 'off') expect(exampleOf(s, 'Python')).not.toBe(SAMPLE)
+  }
 })

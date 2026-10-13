@@ -3,7 +3,7 @@ import type { Register } from 'claude-code'
 
 import type { Settings } from '../types'
 import { lookup } from './lookup'
-import { DEFAULT_LANG, DEFAULT_STYLE, LANGUAGES, STYLES, langOf, parseSettings, styleOf } from './styles'
+import { DEFAULT_LANG, DEFAULT_STYLE, LANGUAGES, SAMPLE, STYLES, exampleOf, langOf, parseSettings, styleOf } from './styles'
 import { buildPrompt, clean, echoes, maxTokensFor } from './translate'
 
 const PANE = 'painel'
@@ -99,7 +99,7 @@ export const register: Register = on => {
         {header('✦ Estilo das mensagens')}
         {STYLES.map((s, i) => {
           const isActive = s.id === active.id
-          const detail = s.hasLanguages ? language.label : s.hint
+          const detail = s.hasLanguages ? `${language.label} ›` : ''
 
           return (
             <Button
@@ -116,10 +116,19 @@ export const register: Register = on => {
               <Text bold={isActive} dimColor={!isActive}>
                 {s.label}
               </Text>
-              {detail ? <Text dimColor>{`  ${detail}${s.hasLanguages ? ' ›' : ''}`}</Text> : ''}
+              {detail ? <Text dimColor>{`  ${detail}`}</Text> : ''}
             </Button>
           )
         })}
+        <Box flexDirection="column" marginTop={1} borderStyle="round" borderColor="gray" paddingX={1}>
+          <Text>{active.about}</Text>
+          {active.id !== 'off' && (
+            <Box flexDirection="column" marginTop={1}>
+              <Text dimColor>{SAMPLE}</Text>
+              <Text color="cyan">{exampleOf(active, language.label)}</Text>
+            </Box>
+          )}
+        </Box>
         <Box marginTop={1}>
           <Text dimColor>ctrl+o mostra o original · esc fecha</Text>
         </Box>
