@@ -22,7 +22,11 @@ const revealed = atom({ plugin: 'veil', key: 'revealed' } as const, false)
 const usage = atom({ plugin: 'veil', key: 'usage' } as const, [] as UsageEntry[])
 const sessionStart = atom({ plugin: 'veil', key: 'sessionStart' } as const, 0)
 
-const cacheKey = (style: string, lang: string, text: string) => `${style}:${lang}\n${text}`
+// Where the person's own messages come from: the terminal's prompt box, Remote Control (phone, web),
+// and a session attached from another terminal, whose socket the engine leaves unstamped.
+const USER_ORIGINS: ReadonlySet<string> = new Set(['composer', 'bridge', 'unclassified'])
+
+const cacheKey =(style: string, lang: string, text: string) => `${style}:${lang}\n${text}`
 
 const trim = <T,>(record: Record<string, T>): Record<string, T> => {
   const keys = Object.keys(record)
@@ -301,6 +305,9 @@ export const register: Register = on => {
 
   on('prompt.submit', async ($, e, next) => {
     const text = e.text
+    if (!USER_ORIGINS.has(e.origin.kind)) {
+      return next(e)
+    }
     const s = parseSettings(await read($, settings))
     const language = langOf(s)
     const style = styleOf(s)
@@ -361,7 +368,7 @@ export const register: Register = on => {
   })
 
   on('ui.render', { component: 'UserMessage' }, async ($, e, next) => {
-    if (e.props.origin.kind !== 'composer' || e.props.isExpanded || (await read($, revealed))) {
+    if (!USER_ORIGINS.has(e.props.origin.kind) || e.props.isExpanded || (await read($, revealed))) {
       return next(e)
     }
 
@@ -371,7 +378,12 @@ export const register: Register = on => {
     }
 
     // A message keeps the style it was sent with; switching styles restyles new ones only.
-    const s = (await read($, sent))[e.props.text] ?? current
+    const recorded = (await read($, sent))[e.props.text]
+    // An unstamped row is disguised only when this mod saw it submitted, never a teammate's.
+    if (e.props.origin.kind === 'unclassified' && recorded === undefined) {
+      return next(e)
+    }
+    const s = recorded ?? current
     const style = styleOf(s)
     const found = style.system
       ? lookup(e.props.text, cacheKey(style.id, langOf(s).id, ''), await read($, cache), pending)
