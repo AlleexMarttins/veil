@@ -50,13 +50,10 @@ export const register: Register = on => {
     }
 
     const header = (title: string) => (
-      <Box justifyContent="space-between" marginBottom={1}>
+      <Box marginBottom={1}>
         <Text bold color="cyan">
           {title}
         </Text>
-        <Button key="close" role="dismiss" hotkey="q" dimColor onPress={() => $.ui.close({ id: PANE })}>
-          ✕
-        </Button>
       </Box>
     )
 
