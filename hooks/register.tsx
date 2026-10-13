@@ -379,7 +379,7 @@ export const register: Register = on => {
 
   on('ui.render', { component: 'UserMessage' }, async ($, e, next) => {
     const isRevealed = await read($, revealed)
-    note($, 'render', { origin: e.props.origin.kind, isExpanded: e.props.isExpanded, isRevealed, surface: e.surface })
+    note($, `render.${e.props.origin.kind}`, { origin: e.props.origin.kind, isExpanded: e.props.isExpanded, isRevealed, surface: e.surface })
     if (!USER_ORIGINS.has(e.props.origin.kind) || e.props.isExpanded || isRevealed) {
       return next(e)
     }
