@@ -1,5 +1,7 @@
 import type { Settings } from '../types'
 import { cipher } from './cipher'
+import { binary, braille, glitch, matrix, morse, rot13, runes } from './ciphers'
+import { emojiSystem, logSystem, systemFor } from './translate'
 
 export type Style = {
   id: string
@@ -8,7 +10,7 @@ export type Style = {
   // Text drawn in place of the message; undefined draws it as typed.
   render: (text: string, translated: string | undefined) => string | undefined
   // Asks Haiku for a rewrite on submit; `render` gets it as `translated`.
-  usesModel?: boolean
+  system?: (language: string) => string
   // Opens the language sub-menu when picked.
   hasLanguages?: boolean
 }
@@ -25,10 +27,31 @@ export const STYLES: readonly Style[] = [
   {
     id: 'code',
     label: 'Code Language',
-    usesModel: true,
+    system: systemFor,
     hasLanguages: true,
     render: (text, translated) => translated ?? cipher(text),
   },
+  {
+    id: 'log',
+    label: 'Log de sistema',
+    hint: 'o pedido como saída de terminal · Haiku',
+    system: logSystem,
+    render: (text, translated) => translated ?? cipher(text),
+  },
+  {
+    id: 'emoji',
+    label: 'Emojis',
+    hint: 'o pedido contado só com emojis · Haiku',
+    system: emojiSystem,
+    render: (text, translated) => translated ?? cipher(text),
+  },
+  { id: 'binary', label: 'Binário', hint: '01001111', render: text => binary(text) },
+  { id: 'morse', label: 'Morse', hint: '.-.. --- --. ---', render: text => morse(text) },
+  { id: 'runes', label: 'Runas', hint: 'ᚠᚢᚦᚨᚱᚲ', render: text => runes(text) },
+  { id: 'braille', label: 'Braille', hint: '⠃⠗⠁⠊⠇⠇⠑', render: text => braille(text) },
+  { id: 'matrix', label: 'Matrix', hint: 'カタカナ', render: text => matrix(text) },
+  { id: 'rot13', label: 'ROT13', hint: 'cifra de César', render: text => rot13(text) },
+  { id: 'glitch', label: 'Glitch', hint: 'texto corrompido', render: text => glitch(text) },
 ]
 
 export const LANGUAGES: ReadonlyArray<{ id: string; label: string }> = [

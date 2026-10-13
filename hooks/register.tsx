@@ -3,7 +3,7 @@ import type { Register } from 'claude-code'
 
 import type { Settings } from '../types'
 import { DEFAULT_LANG, DEFAULT_STYLE, LANGUAGES, STYLES, langOf, parseSettings, styleOf } from './styles'
-import { buildPrompt, clean, echoes, maxTokensFor, systemFor } from './translate'
+import { buildPrompt, clean, echoes, maxTokensFor } from './translate'
 
 const PANE = 'painel'
 const KEEP = 200
@@ -14,7 +14,7 @@ const settings = atom(
 )
 const view = atom({ plugin: 'painel', key: 'view' } as const, 'main' as 'main' | 'lang')
 
-const cacheKey = (lang: string, text: string) => `${lang}\n${text}`
+const cacheKey = (style: string, lang: string, text: string) => `${style}:${lang}\n${text}`
 
 export const register: Register = on => {
   const pending = new Set<string>()
@@ -101,7 +101,7 @@ export const register: Register = on => {
           return (
             <Button
               key={s.id}
-              hotkey={String(i + 1)}
+              hotkey={i < 9 ? String(i + 1) : undefined}
               onPress={async () => {
                 await save({ style: s.id, lang: language.id })
                 if (s.hasLanguages) await update($, view, () => 'lang')
@@ -128,8 +128,10 @@ export const register: Register = on => {
     const text = e.text
     const s = await read($, settings)
     const language = langOf(s)
-    const key = cacheKey(language.id, text)
-    if (styleOf(s).usesModel && text.trim() !== '' && !pending.has(key)) {
+    const style = styleOf(s)
+    const key = cacheKey(style.id, language.id, text)
+    const system = style.system
+    if (system && text.trim() !== '' && !pending.has(key)) {
       pending.add(key)
       // Not awaited: the row is drawn right away either way, holding '⋯' until this lands.
       void (async () => {
@@ -139,8 +141,8 @@ export const register: Register = on => {
           for (const attempt of [0, 1]) {
             const r = await $.model.complete({
               model: 'haiku',
-              system: systemFor(language.label),
-              prompt: attempt === 0 ? buildPrompt(text) : `${buildPrompt(text)}\nNão cite o texto: escreva só o código que faz o que ele pede.`,
+              system: system(language.label),
+              prompt: attempt === 0 ? buildPrompt(text) : `${buildPrompt(text)}\nNão cite o texto: escreva só o resultado que representa o que ele pede.`,
               maxTokens: maxTokensFor(text),
               effort: 'low',
               timeoutMs: 5000,
@@ -176,10 +178,10 @@ export const register: Register = on => {
 
     const s = await read($, settings)
     const style = styleOf(s)
-    const key = cacheKey(langOf(s).id, e.props.text)
-    const translated = style.usesModel ? (await read($, cache))[key] : undefined
+    const key = cacheKey(style.id, langOf(s).id, e.props.text)
+    const translated = style.system ? (await read($, cache))[key] : undefined
     // The row is drawn while Haiku still works: hold a placeholder, not the hex fallback.
-    const isWaiting = style.usesModel && translated === undefined && pending.has(key)
+    const isWaiting = style.system !== undefined && translated === undefined && pending.has(key)
     const shown = isWaiting ? '⋯' : style.render(e.props.text, translated)
 
     return shown === undefined ? next(e) : next({ ...e, props: { ...e.props, text: shown } })
