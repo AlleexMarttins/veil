@@ -1,1 +1,11 @@
-{ "name": "veil", "version": "0.2.0", "description": "Veil: disguise your chat messages as code, logs, emojis, Morse and more, with a settings menu and a token meter", "types": "./types/index.d.ts" }
+{
+  "name": "veil",
+  "version": "1.0.0",
+  "description": "Disguise your Claude Code messages as code, system logs, emojis, Morse, runes and more, with a settings menu and an exact token meter.",
+  "author": { "name": "AlleexMarttins" },
+  "homepage": "https://github.com/AlleexMarttins/veil",
+  "repository": "https://github.com/AlleexMarttins/veil",
+  "license": "MIT",
+  "keywords": ["mod", "chat", "cipher", "style", "tokens"],
+  "types": "./types/index.d.ts"
+}

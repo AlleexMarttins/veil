@@ -1,43 +1,126 @@
-# veil
+<h1 align="center">Veil</h1>
 
-A Claude Code mod that changes how your messages look in the chat. Open it with `/veil`.
+<p align="center">
+  <b>Your words, in disguise.</b><br>
+  A Claude Code mod that redraws the messages you send as code, system logs, emojis, Morse, runes and more.
+</p>
 
-## Styles
+<p align="center">
+  <img src="docs/hero.svg" alt="A message shown in the Log style, with Claude answering the real request underneath" width="860">
+</p>
 
-- **Off**: messages as typed.
-- **Model styles**: the message is rewritten by a model you pick (Haiku by default).
-  - **Code Language**: pseudo-code in Python, JavaScript, Rust, Go, C, SQL, Bash, Lua or Haskell.
-  - **Log**: system log lines.
-  - **Emojis**: the request told with emojis only.
-- **Offline styles**, instant and free: Hexadecimal, Binary, Morse, Runes, Braille, Matrix, ROT13, Glitch.
+Claude still reads exactly what you typed. Veil only changes how your side of the conversation looks on screen, so a shared screen, a stream or a screenshot shows a wall of plausible code instead of your actual question. It is a costume for the transcript, nothing more.
 
-Each message keeps the style it was sent with.
+## Install
+
+Open Claude Code in a terminal and type:
+
+```
+/plugin install veil --marketplace AlleexMarttins/veil
+```
+
+Answer `y` when it asks to add the marketplace, then press Enter to install for your user. Veil is active right away, and in every session you start from then on.
+
+Prefer the shell? The same thing in two commands:
+
+```
+claude plugin marketplace add AlleexMarttins/veil
+claude plugin install veil@veil
+```
+
+### Or let Claude do it
+
+Paste this into any Claude Code session and it will handle the rest:
+
+> Install the Veil mod for me. Run `/plugin install veil --marketplace AlleexMarttins/veil` at user scope, then add `"ctrl+x r": "app:toggleReplTab"` to the Global context of `~/.claude/keybindings.json`, keeping any bindings already there.
+
+The second half sets up the reveal shortcut described below.
+
+## Pick a style
+
+Type `/veil` to open the menu. Choose a style with the mouse, the arrow keys or the number keys.
+
+<p align="center">
+  <img src="docs/menu.svg" alt="The /veil menu with the Log style selected and its example below" width="700">
+</p>
+
+<p align="center">
+  <img src="docs/styles.svg" alt="The sentence 'open the browser' drawn in every style" width="860">
+</p>
+
+There are two families.
+
+**Model styles** rewrite each message with a small model, so the result follows what you actually asked:
+
+- **Code Language** turns the request into pseudo-code in Python, JavaScript, Rust, Go, C, SQL, Bash, Lua or Haskell.
+- **Log** turns it into system log lines.
+- **Emojis** tells it with emojis alone.
+
+**Offline styles** run locally, instantly and for free: Hexadecimal, Binary, Morse, Runes, Braille, Matrix, ROT13 and Glitch.
+
+Every message keeps the style it was sent with. Switching styles only changes what comes next, so your history stays the way it looked.
 
 ## Seeing the originals
 
-- `ctrl+o` opens the transcript with the originals.
-- `/reveal` shows or hides them in place.
-- `ctrl+x r` does the same as `/reveal`. Claude Code has no custom key actions for mods, so the mod answers the unused `app:toggleReplTab` action. Bind it in `~/.claude/keybindings.json`:
+Three ways, all reversible:
+
+- `ctrl+o` opens the full transcript with every message as typed.
+- `/reveal` shows or hides the originals in place.
+- `ctrl+x r` does the same as `/reveal`, once it is bound.
+
+Claude Code does not let a mod register its own key action, so Veil listens for `app:toggleReplTab`, an action Claude Code ships without a default key. Bind it in `~/.claude/keybindings.json`:
 
 ```json
 {
-  "bindings": [{ "context": "Global", "bindings": { "ctrl+x r": "app:toggleReplTab" } }]
+  "bindings": [
+    { "context": "Global", "bindings": { "ctrl+x r": "app:toggleReplTab" } }
+  ]
 }
 ```
 
+The diamond at the right of the hint line tells you where you stand: cyan while your messages are veiled, yellow while the originals are showing.
+
 ## Settings
 
-The **Settings** tab sets the interface and output language (English, Português, Español), the model, effort, retry when the reply copies the message, detail level and the live meter.
+The **Settings** tab of `/veil` holds everything that trades speed, cost and quality:
 
-## Usage
+| Setting | What it changes |
+| :-- | :-- |
+| Language | Interface and model output: English (US), Português (BR) or Español. |
+| Model | Haiku is the fastest and cheapest. Sonnet and Opus follow your words more closely. |
+| Effort | Low, medium or high. More effort means more faithful and slower. |
+| Retry | A second call when the reply pastes your message back instead of translating it. |
+| Detail | Compact, normal or detailed. Fewer lines cost fewer tokens. |
+| Live meter | Shows or hides the token meter under the prompt. |
 
-The **Usage** tab counts the exact tokens the mod spends, from the API's own usage report: per session, today, 7 days, 30 days and all time; per model; per message; and the average per message with the current settings. The live meter on the right of the hint line under the prompt shows the session's tokens, the mod's model and the session model.
+## Know what it costs
 
-## Development
+Model styles make one small call per message, and Veil counts every token of it, straight from the usage report the API returns.
+
+<p align="center">
+  <img src="docs/usage.svg" alt="The Usage tab with token totals by period, by model and per message" width="760">
+</p>
+
+The **Usage** tab breaks it down by session, day, week, month and all time, by model and per message, and works out the average cost of one message with your current settings. The live meter sits at the far right of the hint line under the prompt, out of the way of any status line you already use, and shows the session's tokens next to the model your chat is running on.
+
+Offline styles never call a model and cost nothing.
+
+## Good to know
+
+- Veil changes the drawing only. The transcript file, what Claude reads and what gets sent are untouched.
+- Model styles send your message to the model you pick, through your own Claude Code session and account, the same way your chat does.
+- Translations and the style of each message are kept for the current session. After a restart, older messages fall back to hexadecimal.
+- To remove it: `/plugin uninstall veil`.
+
+## Make your own style
+
+A style is one entry in `hooks/styles.ts` and one line of text per language in `hooks/i18n.ts`. The menu picks it up by itself.
 
 ```
 claude plugin validate .
 claude plugin test .
 ```
 
-New styles go in `STYLES` in `hooks/styles.ts`, with their text in `hooks/i18n.ts`.
+## License
+
+MIT

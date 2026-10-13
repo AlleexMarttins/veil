@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420" viewBox="0 0 760 420" font-family="ui-monospace, SFMono-Regular, 'Cascadia Code', Menlo, Consolas, monospace" font-size="14">
+  <rect x="0.5" y="0.5" width="759" height="419" rx="12" fill="#0d1117" stroke="#30363d"/>
+  <path d="M12 0.5h736a11.5 11.5 0 0 1 11.5 11.5v20h-759v-20a11.5 11.5 0 0 1 11.5-11.5z" fill="#161b22"/>
+  <circle cx="22" cy="16" r="6" fill="#ff5f57"/><circle cx="42" cy="16" r="6" fill="#febc2e"/><circle cx="62" cy="16" r="6" fill="#28c840"/>
+  <text x="380" y="21" text-anchor="middle" fill="#7d8590" font-size="13">/veil  ·  Usage</text>
+  <g>
+    
+    <text x="22" y="60" xml:space="preserve"><tspan fill="#7d8590" font-weight="400">Styles   Settings   </tspan><tspan fill="#39c5cf" font-weight="700">Usage</tspan></text>
+    <text x="22" y="82" xml:space="preserve"></text>
+    <text x="22" y="104" xml:space="preserve"><tspan fill="#e6edf3" font-weight="400">Session     </tspan><tspan fill="#39c5cf" font-weight="400">   1.4k</tspan><tspan fill="#7d8590" font-weight="400">  in 1.1k · out 310 · 6 msg</tspan></text>
+    <text x="22" y="126" xml:space="preserve"><tspan fill="#e6edf3" font-weight="400">Today       </tspan><tspan fill="#39c5cf" font-weight="400">   5.2k</tspan><tspan fill="#7d8590" font-weight="400">  in 4.0k · out 1.2k · 21 msg</tspan></text>
+    <text x="22" y="148" xml:space="preserve"><tspan fill="#e6edf3" font-weight="400">7 days      </tspan><tspan fill="#39c5cf" font-weight="400">  31.8k</tspan><tspan fill="#7d8590" font-weight="400">  in 24.6k · out 7.2k · 130 msg</tspan></text>
+    <text x="22" y="170" xml:space="preserve"><tspan fill="#e6edf3" font-weight="400">30 days     </tspan><tspan fill="#39c5cf" font-weight="400">  88.0k</tspan><tspan fill="#7d8590" font-weight="400">  in 67.9k · out 20.1k · 362 msg</tspan></text>
+    <text x="22" y="192" xml:space="preserve"></text>
+    <text x="22" y="214" xml:space="preserve"><tspan fill="#e6edf3" font-weight="700">By model</tspan></text>
+    <text x="22" y="236" xml:space="preserve"><tspan fill="#e6edf3" font-weight="400">Haiku       </tspan><tspan fill="#39c5cf" font-weight="400">  80.3k</tspan><tspan fill="#7d8590" font-weight="400">  in 62.0k · out 18.3k · 341 msg</tspan></text>
+    <text x="22" y="258" xml:space="preserve"><tspan fill="#e6edf3" font-weight="400">Sonnet      </tspan><tspan fill="#39c5cf" font-weight="400">   7.7k</tspan><tspan fill="#7d8590" font-weight="400">  in 5.9k · out 1.8k · 21 msg</tspan></text>
+    <text x="22" y="280" xml:space="preserve"></text>
+    <text x="22" y="302" xml:space="preserve"><tspan fill="#e6edf3" font-weight="700">Last messages</tspan></text>
+    <text x="22" y="324" xml:space="preserve"><tspan fill="#7d8590" font-weight="400">14:02  </tspan><tspan fill="#e6edf3" font-weight="400">Log           </tspan><tspan fill="#7d8590" font-weight="400">Haiku   </tspan><tspan fill="#39c5cf" font-weight="400">    231</tspan></text>
+    <text x="22" y="346" xml:space="preserve"><tspan fill="#7d8590" font-weight="400">13:58  </tspan><tspan fill="#e6edf3" font-weight="400">Code Language </tspan><tspan fill="#7d8590" font-weight="400">Haiku   </tspan><tspan fill="#39c5cf" font-weight="400">    264</tspan><tspan fill="#7d8590" font-weight="400">  ×2</tspan></text>
+    <text x="22" y="368" xml:space="preserve"></text>
+    <text x="22" y="390" xml:space="preserve"><tspan fill="#7d8590" font-weight="400">Average per message with current settings: </tspan><tspan fill="#39c5cf" font-weight="400">242</tspan></text>
+  </g>
+</svg>
