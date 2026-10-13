@@ -2,6 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { Register } from 'claude-code'
 
 import type { Settings } from '../types'
+import { lookup } from './lookup'
 import { DEFAULT_LANG, DEFAULT_STYLE, LANGUAGES, STYLES, langOf, parseSettings, styleOf } from './styles'
 import { buildPrompt, clean, echoes, maxTokensFor } from './translate'
 
@@ -12,6 +13,8 @@ const settings = atom(
   { plugin: 'painel', key: 'settings' } as const,
   { style: DEFAULT_STYLE, lang: DEFAULT_LANG } as Settings,
 )
+// The style each message was sent with, by its text.
+const sent = atom({ plugin: 'painel', key: 'sent' } as const, {} as Record<string, Settings>)
 const view = atom({ plugin: 'painel', key: 'view' } as const, 'main' as 'main' | 'lang')
 
 const cacheKey = (style: string, lang: string, text: string) => `${style}:${lang}\n${text}`
@@ -130,6 +133,14 @@ export const register: Register = on => {
     const language = langOf(s)
     const style = styleOf(s)
     const key = cacheKey(style.id, language.id, text)
+    if (style.id !== 'off' && text.trim() !== '') {
+      await update($, sent, m => {
+        const merged = { ...m, [text]: { style: style.id, lang: language.id } }
+        const keys = Object.keys(merged)
+        for (const k of keys.slice(0, Math.max(0, keys.length - KEEP))) delete merged[k]
+        return merged
+      })
+    }
     const system = style.system
     if (system && text.trim() !== '' && !pending.has(key)) {
       pending.add(key)
@@ -176,13 +187,19 @@ export const register: Register = on => {
       return next(e)
     }
 
-    const s = await read($, settings)
+    const current = await read($, settings)
+    if (styleOf(current).id === 'off') {
+      return next(e)
+    }
+
+    // A message keeps the style it was sent with; switching styles restyles new ones only.
+    const s = (await read($, sent))[e.props.text] ?? current
     const style = styleOf(s)
-    const key = cacheKey(style.id, langOf(s).id, e.props.text)
-    const translated = style.system ? (await read($, cache))[key] : undefined
+    const found = style.system
+      ? lookup(e.props.text, cacheKey(style.id, langOf(s).id, ''), await read($, cache), pending)
+      : { isWaiting: false }
     // The row is drawn while Haiku still works: hold a placeholder, not the hex fallback.
-    const isWaiting = style.system !== undefined && translated === undefined && pending.has(key)
-    const shown = isWaiting ? '⋯' : style.render(e.props.text, translated)
+    const shown = found.isWaiting ? '⋯' : style.render(e.props.text, found.translated)
 
     return shown === undefined ? next(e) : next({ ...e, props: { ...e.props, text: shown } })
   })

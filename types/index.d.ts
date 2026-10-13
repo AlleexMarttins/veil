@@ -6,6 +6,7 @@ declare module 'claude-code' {
       cache: Record<string, string>
       settings: Settings
       view: 'main' | 'lang'
+      sent: Record<string, Settings>
     }
   }
 }
