@@ -33,8 +33,7 @@ export const STYLES: readonly Style[] = [
   },
   {
     id: 'log',
-    label: 'Log de sistema',
-    hint: 'o pedido como saída de terminal · Haiku',
+    label: 'Log',
     system: logSystem,
     render: (text, translated) => translated ?? cipher(text),
   },
