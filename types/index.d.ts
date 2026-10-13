@@ -27,7 +27,7 @@ export type View = 'main' | 'lang' | 'settings' | 'usage'
 
 declare module 'claude-code' {
   interface PluginState {
-    painel: {
+    veil: {
       cache: Record<string, string>
       settings: Settings
       view: View

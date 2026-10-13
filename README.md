@@ -1,6 +1,6 @@
-# painel
+# veil
 
-A Claude Code mod that changes how your messages look in the chat. Open it with `/painel`.
+A Claude Code mod that changes how your messages look in the chat. Open it with `/veil`.
 
 ## Styles
 

@@ -8,19 +8,19 @@ import { DEFAULTS, DETAILS, EFFORTS, LANGUAGES, MODELS, STYLES, cycle, exampleOf
 import { RETRY_NOTE, buildPrompt, clean, echoes, maxTokensFor } from './translate'
 import { KEEP_USAGE, averagePerMessage, byModel, fmt, lastMessages, parseUsage, periods } from './usage'
 
-const PANE = 'painel'
+const PANE = 'veil'
 const KEEP = 200
 // A free engine action: the user binds a chord to it (ctrl+x r) and the hint line's button answers it.
 const REVEAL_ACTION = 'app:toggleReplTab'
 
-const cache = atom({ plugin: 'painel', key: 'cache' } as const, {} as Record<string, string>)
-const settings = atom({ plugin: 'painel', key: 'settings' } as const, DEFAULTS as Settings)
+const cache = atom({ plugin: 'veil', key: 'cache' } as const, {} as Record<string, string>)
+const settings = atom({ plugin: 'veil', key: 'settings' } as const, DEFAULTS as Settings)
 // The style each message was sent with, by its text.
-const sent = atom({ plugin: 'painel', key: 'sent' } as const, {} as Record<string, Sent>)
-const view = atom({ plugin: 'painel', key: 'view' } as const, 'main' as View)
-const revealed = atom({ plugin: 'painel', key: 'revealed' } as const, false)
-const usage = atom({ plugin: 'painel', key: 'usage' } as const, [] as UsageEntry[])
-const sessionStart = atom({ plugin: 'painel', key: 'sessionStart' } as const, 0)
+const sent = atom({ plugin: 'veil', key: 'sent' } as const, {} as Record<string, Sent>)
+const view = atom({ plugin: 'veil', key: 'view' } as const, 'main' as View)
+const revealed = atom({ plugin: 'veil', key: 'revealed' } as const, false)
+const usage = atom({ plugin: 'veil', key: 'usage' } as const, [] as UsageEntry[])
+const sessionStart = atom({ plugin: 'veil', key: 'sessionStart' } as const, 0)
 
 const cacheKey = (style: string, lang: string, text: string) => `${style}:${lang}\n${text}`
 
@@ -39,7 +39,7 @@ export const register: Register = on => {
   const pending = new Set<string>()
 
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'painel', description: 'Message styles, settings and token usage' })
+    await $.command.register({ name: 'veil', description: 'Message styles, settings and token usage' })
     await $.command.register({ name: 'reveal', description: 'Show or hide the original messages', immediate: true })
     const saved = parseSettings(await $.store.get('settings'))
     await update($, settings, () => saved)
@@ -51,9 +51,9 @@ export const register: Register = on => {
     return next(e)
   })
 
-  on('command.run', { command: 'painel' }, async $ => {
+  on('command.run', { command: 'veil' }, async $ => {
     await update($, view, () => 'main')
-    await $.ui.open({ id: PANE, title: 'Painel', focus: true, closeOnEscape: true })
+    await $.ui.open({ id: PANE, title: 'Veil', focus: true, closeOnEscape: true })
 
     return {}
   })
@@ -400,7 +400,7 @@ export const register: Register = on => {
         <Text dimColor wrap="truncate-end">
           {e.props.hint}
         </Text>
-        <Button key="painel-reveal" plain action={REVEAL_ACTION} onPress={toggle}>
+        <Button key="veil-reveal" plain action={REVEAL_ACTION} onPress={toggle}>
           <Text color={isRevealed ? 'yellow' : 'cyan'}>{glyph}</Text>
           <Text dimColor>{meter}</Text>
         </Button>

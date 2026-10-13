@@ -1,1 +1,1 @@
-{ "name": "painel", "version": "0.1.0", "description": "Painel unificado /painel para ligar e desligar as personalizações do chat", "types": "./types/index.d.ts" }
+{ "name": "veil", "version": "0.2.0", "description": "Veil: disguise your chat messages as code, logs, emojis, Morse and more, with a settings menu and a token meter", "types": "./types/index.d.ts" }

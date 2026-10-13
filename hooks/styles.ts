@@ -30,7 +30,7 @@ const CODE_EXAMPLES: Record<string, string> = {
 
 const viaModel = (text: string, translated: string | undefined) => translated ?? cipher(text)
 
-// One style is active at a time. Add a new one here and its text in i18n.ts; /painel lists it by itself.
+// One style is active at a time. Add a new one here and its text in i18n.ts; /veil lists it by itself.
 export const STYLES: readonly Style[] = [
   { id: 'off', render: () => undefined },
   { id: 'hex', render: text => cipher(text) },
