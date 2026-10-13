@@ -1,18 +1,17 @@
 import type { Settings } from '../types'
 import { cipher } from './cipher'
 import { binary, braille, glitch, matrix, morse, rot13, runes } from './ciphers'
+import { DEFAULT_LOCALE, LOCALES, t } from './i18n'
 import { emojiSystem, logSystem, systemFor } from './translate'
 
 export type Style = {
   id: string
-  label: string
-  about: string
-  // Haiku styles show this as their example; offline ones draw the sample themselves.
-  example?: (language: string) => string
   // Text drawn in place of the message; undefined draws it as typed.
   render: (text: string, translated: string | undefined) => string | undefined
-  // Asks Haiku for a rewrite on submit; `render` gets it as `translated`.
-  system?: (language: string) => string
+  // Asks the model for a rewrite on submit; `render` gets it as `translated`.
+  system?: (codeLanguage: string, outputLanguage: string) => string
+  // Model styles show this as their example; offline ones draw the sample themselves.
+  example?: (codeLanguage: string, locale: string) => string
   // Opens the language sub-menu when picked.
   hasLanguages?: boolean
 }
@@ -29,53 +28,28 @@ const CODE_EXAMPLES: Record<string, string> = {
   Haskell: 'openBrowser :: IO ()',
 }
 
-export const SAMPLE = 'abrir o navegador'
+const viaModel = (text: string, translated: string | undefined) => translated ?? cipher(text)
 
-// What the details box shows under the menu: the sample as this style would draw it.
-export const exampleOf = (style: Style, language: string): string =>
-  style.example ? style.example(language) : (style.render(SAMPLE, undefined) ?? SAMPLE)
-
-// One style is active at a time. Add a new one here; /painel lists it by itself.
+// One style is active at a time. Add a new one here and its text in i18n.ts; /painel lists it by itself.
 export const STYLES: readonly Style[] = [
-  { id: 'off', label: 'Desativado', about: 'As mensagens aparecem normais.', render: () => undefined },
-  {
-    id: 'hex',
-    label: 'Hexadecimal',
-    about: 'Cada mensagem vira blocos hexadecimais.',
-    render: text => cipher(text),
-  },
+  { id: 'off', render: () => undefined },
+  { id: 'hex', render: text => cipher(text) },
   {
     id: 'code',
-    label: 'Code Language',
-    about: 'O Haiku reescreve a mensagem como código na linguagem escolhida.',
-    example: language => CODE_EXAMPLES[language] ?? 'browser.open()',
     system: systemFor,
     hasLanguages: true,
-    render: (text, translated) => translated ?? cipher(text),
+    example: language => CODE_EXAMPLES[language] ?? 'browser.open()',
+    render: viaModel,
   },
-  {
-    id: 'log',
-    label: 'Log',
-    about: 'O pedido vira linhas de log de sistema.',
-    example: () => '[EXEC] browser.open()\n[OK] navegador aberto',
-    system: logSystem,
-    render: (text, translated) => translated ?? cipher(text),
-  },
-  {
-    id: 'emoji',
-    label: 'Emojis',
-    about: 'O pedido é contado só com emojis.',
-    example: () => '🔓🌐',
-    system: emojiSystem,
-    render: (text, translated) => translated ?? cipher(text),
-  },
-  { id: 'binary', label: 'Binário', about: 'Cada caractere vira 8 bits.', render: text => binary(text) },
-  { id: 'morse', label: 'Morse', about: 'Letras e números viram código Morse.', render: text => morse(text) },
-  { id: 'runes', label: 'Runas', about: 'Letras viram runas do alfabeto Futhark.', render: text => runes(text) },
-  { id: 'braille', label: 'Braille', about: 'Letras viram caracteres Braille.', render: text => braille(text) },
-  { id: 'matrix', label: 'Matrix', about: 'Letras viram katakana, como na chuva do Matrix.', render: text => matrix(text) },
-  { id: 'rot13', label: 'ROT13', about: 'Cada letra avança 13 posições no alfabeto.', render: text => rot13(text) },
-  { id: 'glitch', label: 'Glitch', about: 'O texto fica corrompido por marcas sobrepostas.', render: text => glitch(text) },
+  { id: 'log', system: logSystem, example: (_, locale) => t(locale, 'logExample'), render: viaModel },
+  { id: 'emoji', system: emojiSystem, example: () => '🔓🌐', render: viaModel },
+  { id: 'binary', render: text => binary(text) },
+  { id: 'morse', render: text => morse(text) },
+  { id: 'runes', render: text => runes(text) },
+  { id: 'braille', render: text => braille(text) },
+  { id: 'matrix', render: text => matrix(text) },
+  { id: 'rot13', render: text => rot13(text) },
+  { id: 'glitch', render: text => glitch(text) },
 ]
 
 export const LANGUAGES: ReadonlyArray<{ id: string; label: string }> = [
@@ -90,22 +64,64 @@ export const LANGUAGES: ReadonlyArray<{ id: string; label: string }> = [
   { id: 'haskell', label: 'Haskell' },
 ]
 
-export const DEFAULT_STYLE = 'code'
-export const DEFAULT_LANG = 'python'
+export const MODELS: ReadonlyArray<{ id: string; label: string }> = [
+  { id: 'haiku', label: 'Haiku' },
+  { id: 'sonnet', label: 'Sonnet' },
+  { id: 'opus', label: 'Opus' },
+]
+export const EFFORTS = ['low', 'medium', 'high'] as const
+export const DETAILS = ['compact', 'normal', 'detailed'] as const
+
+export const DEFAULTS: Settings = {
+  style: 'code',
+  lang: 'python',
+  locale: DEFAULT_LOCALE,
+  model: 'haiku',
+  effort: 'low',
+  retry: true,
+  detail: 'normal',
+  meter: true,
+}
+
+// What the details box shows under the menu: the sample as this style would draw it.
+export const exampleOf = (style: Style, codeLanguage: string, locale: string): string => {
+  const sample = t(locale, 'sample')
+  return style.example ? style.example(codeLanguage, locale) : (style.render(sample, undefined) ?? sample)
+}
 
 export const styleOf = (s: Readonly<Record<string, unknown>>): Style =>
-  STYLES.find(x => x.id === s.style) ?? (STYLES.find(x => x.id === DEFAULT_STYLE) as Style)
+  STYLES.find(x => x.id === s.style) ?? (STYLES.find(x => x.id === DEFAULTS.style) as Style)
 
 export const langOf = (s: Readonly<Record<string, unknown>>): { id: string; label: string } =>
-  LANGUAGES.find(x => x.id === s.lang) ?? (LANGUAGES.find(x => x.id === DEFAULT_LANG) as { id: string; label: string })
+  LANGUAGES.find(x => x.id === s.lang) ?? (LANGUAGES.find(x => x.id === DEFAULTS.lang) as { id: string; label: string })
+
+const pick = <T extends string>(value: unknown, allowed: readonly T[], fallback: T): T =>
+  allowed.includes(value as T) ? (value as T) : fallback
 
 export const parseSettings = (raw: unknown): Settings => {
-  const r = (raw ?? {}) as { style?: unknown; lang?: unknown; on?: Record<string, boolean>; opt?: Record<string, string> }
-  const lang = typeof r.lang === 'string' && LANGUAGES.some(x => x.id === r.lang) ? r.lang : DEFAULT_LANG
-  if (r.style === 'python') return { style: 'code', lang: 'python' }
-  if (typeof r.style === 'string' && STYLES.some(x => x.id === r.style)) return { style: r.style, lang }
-  // Settings saved by the earlier toggle + option menu.
-  if (r.on && r.on.cifra === false) return { style: 'off', lang }
-  if (r.opt?.cifra === 'hex') return { style: 'hex', lang }
-  return { style: DEFAULT_STYLE, lang }
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown> & {
+    on?: Record<string, boolean>
+    opt?: Record<string, string>
+  }
+  const lang = pick(r.lang, LANGUAGES.map(x => x.id), DEFAULTS.lang)
+  let style = pick(r.style, STYLES.map(x => x.id), DEFAULTS.style)
+  // Settings saved by earlier versions of the menu.
+  if (r.style === 'python') style = 'code'
+  else if (r.style === undefined && r.on?.cifra === false) style = 'off'
+  else if (r.style === undefined && r.opt?.cifra === 'hex') style = 'hex'
+
+  return {
+    style,
+    lang: r.style === 'python' ? 'python' : lang,
+    locale: pick(r.locale, LOCALES.map(l => l.id), DEFAULTS.locale as 'en'),
+    model: pick(r.model, MODELS.map(m => m.id), DEFAULTS.model),
+    effort: pick(r.effort, EFFORTS, 'low'),
+    retry: typeof r.retry === 'boolean' ? r.retry : DEFAULTS.retry,
+    detail: pick(r.detail, DETAILS, 'normal'),
+    meter: typeof r.meter === 'boolean' ? r.meter : DEFAULTS.meter,
+  }
 }
+
+// The next value of a setting the menu cycles through.
+export const cycle = <T>(values: readonly T[], current: T): T =>
+  values[(values.indexOf(current) + 1) % values.length] as T
