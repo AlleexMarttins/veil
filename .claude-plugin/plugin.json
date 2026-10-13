@@ -1,6 +1,6 @@
 {
   "name": "veil",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Disguise your Claude Code messages as code, system logs, emojis, Morse, runes and more, with a settings menu and an exact token meter.",
   "author": { "name": "AlleexMarttins" },
   "homepage": "https://github.com/AlleexMarttins/veil",

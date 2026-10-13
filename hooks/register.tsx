@@ -39,6 +39,15 @@ const hhmm = (ms: number) => {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
+// The last thing each hook saw, kept in the store file so a bug report can quote it.
+const seen: Record<string, string> = {}
+function note($: { store: { set: (key: string, value: unknown) => Promise<void> } }, hook: string, facts: Record<string, unknown>) {
+  const json = JSON.stringify(facts)
+  if (seen[hook] === json) return
+  seen[hook] = json
+  $.store.set(`diag.${hook}`, facts).catch(() => undefined)
+}
+
 export const register: Register = on => {
   const pending = new Set<string>()
 
@@ -305,6 +314,7 @@ export const register: Register = on => {
 
   on('prompt.submit', async ($, e, next) => {
     const text = e.text
+    note($, 'submit', { origin: e.origin.kind })
     if (!USER_ORIGINS.has(e.origin.kind)) {
       return next(e)
     }
@@ -368,7 +378,9 @@ export const register: Register = on => {
   })
 
   on('ui.render', { component: 'UserMessage' }, async ($, e, next) => {
-    if (!USER_ORIGINS.has(e.props.origin.kind) || e.props.isExpanded || (await read($, revealed))) {
+    const isRevealed = await read($, revealed)
+    note($, 'render', { origin: e.props.origin.kind, isExpanded: e.props.isExpanded, isRevealed, surface: e.surface })
+    if (!USER_ORIGINS.has(e.props.origin.kind) || e.props.isExpanded || isRevealed) {
       return next(e)
     }
 
