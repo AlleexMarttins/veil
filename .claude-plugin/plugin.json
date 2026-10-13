@@ -1,0 +1,1 @@
+{ "name": "painel", "version": "0.1.0", "description": "Painel unificado /painel para ligar e desligar as personalizações do chat", "types": "./types/index.d.ts" }
