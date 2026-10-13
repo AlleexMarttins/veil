@@ -32,9 +32,9 @@ claude plugin install veil@veil
 
 Paste this into any Claude Code session and it will handle the rest:
 
-> Install the Veil mod for me. Run `/plugin install veil --marketplace AlleexMarttins/veil` at user scope, then add `"ctrl+x r": "app:toggleReplTab"` to the Global context of `~/.claude/keybindings.json`, keeping any bindings already there.
+> Install the Veil mod for me. Run `/plugin install veil --marketplace AlleexMarttins/veil` at user scope, then add `"ctrl+x r": "app:toggleReplTab"` to the Global context of `~/.claude/keybindings.json`, keeping any bindings already there. If `enabledPlugins` in `~/.claude/settings.json` lists a theme plugin such as `ui-themes`, move `"veil@veil"` above it.
 
-The second half sets up the reveal shortcut described below.
+The rest sets up the reveal shortcut and keeps Veil working next to theme mods, both described below.
 
 ## Pick a style
 
@@ -79,6 +79,21 @@ Claude Code does not let a mod register its own key action, so Veil listens for 
 ```
 
 The diamond at the right of the hint line tells you where you stand: cyan while your messages are veiled, yellow while the originals are showing.
+
+## Using it with theme mods
+
+Some mods redraw your messages too. [ui-themes](https://github.com/yugal1107/ui-themes), for example, paints each of your messages in its own colored box and does not hand the drawing on to the mods after it. If such a mod runs before Veil, Veil never gets its turn and your messages show as typed, even though the token meter keeps counting.
+
+The fix is to let Veil go first. Claude Code runs mods in the order `enabledPlugins` lists them in `~/.claude/settings.json`, so put Veil above the theme:
+
+```json
+"enabledPlugins": {
+  "veil@veil": true,
+  "ui-themes@ui-themes": true
+}
+```
+
+Restart Claude Code afterwards. Veil then disguises the text and the theme paints it, so you keep both.
 
 ## Settings
 
