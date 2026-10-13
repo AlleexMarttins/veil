@@ -1,0 +1,28 @@
+import { test, expect } from 'claude-code/testing'
+
+const USAGE = { input_tokens: 120, output_tokens: 40, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 }
+
+test('a model style records the call usage the meter reads', async ($, on) => {
+  const store: Record<string, unknown> = { settings: { style: 'log' } }
+  let now = 1_000_000
+  on('store.get', (_$, e) => ({ value: store[e.key] as never }))
+  on('store.set', (_$, e) => {
+    store[e.key] = e.value
+    return { value: undefined }
+  })
+  on('command.register', (_$, e) => ({ value: { command: e.name } }))
+  on('clock.now', () => ({ value: (now += 10) }))
+  on('model.complete', () => ({ value: { isAnswered: true, text: '[OK] browser opened', usage: USAGE } }))
+  on('session.start', (_$, e) => ({ cwd: e.cwd }))
+  on('prompt.submit', (_$, e) => ({ text: e.text }))
+
+  await $.session.start({ cwd: 'Z:\\', surface: 'terminal', isInteractive: true })
+  await $.prompt.submit({ text: 'open the browser and look for shoes', wait: false, origin: { kind: 'composer' } })
+  // The translation runs unawaited; let it finish before checking.
+  for (let i = 0; i < 500; i++) await Promise.resolve()
+
+  const saved = store.usage as Array<{ input: number; output: number }> | undefined
+  expect(saved?.length).toBe(1)
+  expect(saved?.[0]?.input).toBe(120)
+  expect(saved?.[0]?.output).toBe(40)
+})

@@ -346,6 +346,9 @@ export const register: Register = on => {
             wrote = true
             break
           }
+        } catch (err) {
+          // Surfaced so a refused call or state write is not silent.
+          $.ui.toast(`veil: ${err instanceof Error ? err.message : String(err)}`)
         } finally {
           pending.delete(key)
           // A failed call wrote nothing: redraw so the row trades '⋯' for the hex fallback.
