@@ -12,7 +12,7 @@ test('a model style records the call usage the meter reads', async ($, on) => {
   })
   on('command.register', (_$, e) => ({ value: { command: e.name } }))
   on('clock.now', () => ({ value: (now += 10) }))
-  on('model.complete', () => ({ value: { isAnswered: true, text: '[OK] browser opened', usage: USAGE } }))
+  on('model.complete', () => ({ value: { isAnswered: true, text: '<out>[OK] browser opened</out>', usage: USAGE } }))
   on('session.start', (_$, e) => ({ cwd: e.cwd }))
   on('prompt.submit', (_$, e) => ({ text: e.text }))
 
@@ -46,7 +46,7 @@ for (const [kind, isTranslated] of [
     on('clock.now', () => ({ value: 1_000_000 }))
     on('model.complete', () => {
       calls += 1
-      return { value: { isAnswered: true, text: '[OK] done', usage: USAGE } }
+      return { value: { isAnswered: true, text: '<out>[OK] done</out>', usage: USAGE } }
     })
     on('session.start', (_$, e) => ({ cwd: e.cwd }))
     on('prompt.submit', (_$, e) => ({ text: e.text }))

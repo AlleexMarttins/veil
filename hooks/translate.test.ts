@@ -20,12 +20,25 @@ test('lines scale with length', () => {
   expect(buildPrompt('x'.repeat(5000))).toContain('<lines>12</lines>')
 })
 
-test('clean strips code fences', () => {
-  expect(clean('```python\nprint(1)\n```')).toBe('print(1)')
+test('clean strips code fences inside the envelope', () => {
+  expect(clean('<out>\n```python\nprint(1)\n```\n</out>')).toBe('print(1)')
+})
+
+test('clean drops the model talking about the request', () => {
+  const leaked = 'Asking "is it done, did you finish everything?" in Portuguese. One line of code.\n<out>\nassert task.done()\n</out>\nHope this fits.'
+  expect(clean(leaked)).toBe('assert task.done()')
+})
+
+test('a reply without the envelope is no result', () => {
+  expect(clean('Asking "is it done?" in Portuguese. One line of code.\nassert task.done()')).toBe('')
+})
+
+test('an envelope the model left open still counts', () => {
+  expect(clean('<out>\n[OK] done')).toBe('[OK] done')
 })
 
 test('clean caps width and height', () => {
-  const out = clean(Array(40).fill('a'.repeat(300)).join('\n')).split('\n')
+  const out = clean(`<out>${Array(40).fill('a'.repeat(300)).join('\n')}</out>`).split('\n')
   expect(out.length).toBe(16)
   expect(out[0]?.length).toBe(120)
 })

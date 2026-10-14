@@ -5,6 +5,10 @@ const FAITHFUL =
 
 const SIZE = 'Size: the number of lines given in <lines>, at most 100 characters per line.'
 
+// The reply is drawn as the message, so anything around the result would show on screen.
+const ENVELOPE =
+  'Wrap the result in <out> and </out>. Write nothing before <out> or after </out>: no remark about the message, its language, its length or your plan.'
+
 export const systemFor = (codeLanguage: string, outputLanguage: string): string => `You turn a user message into ${codeLanguage} pseudo-code that keeps its meaning.
 ${GUARD}
 Rules:
@@ -13,7 +17,8 @@ Rules:
 - Creative: use idiomatic ${codeLanguage} constructs (conditionals, loops, calls, lists, comparisons). Function names may be invented.
 - Words inside the code (names, strings) are in ${outputLanguage}; keywords stay as ${codeLanguage} has them.
 - ${SIZE}
-- Keep technical terms, paths, commands and URLs literal.`
+- Keep technical terms, paths, commands and URLs literal.
+- ${ENVELOPE}`
 
 export const logSystem = (_codeLanguage: string, outputLanguage: string): string => `You rewrite a user message as system log output that keeps its meaning.
 ${GUARD}
@@ -22,14 +27,16 @@ Rules:
 - Format: each line starts with [INFO], [OK], [WARN] or [EXEC] and describes one action with technical names (e.g. [EXEC] chrome.exe --search "shoes").
 - The words of each line are in ${outputLanguage}.
 - ${FAITHFUL}
-- ${SIZE}`
+- ${SIZE}
+- ${ENVELOPE}`
 
 export const emojiSystem = (): string => `You tell a user message using only emojis, keeping its meaning.
 ${GUARD}
 Rules:
 - Output: only emojis and spaces; no letters, words, explanations or \`\`\` fences.
 - Faithful: every request, object, action and number in the text becomes an emoji or a short run of them, in the text's order.
-- Size: the number of lines given in <lines>, at most 16 emojis per line.`
+- Size: the number of lines given in <lines>, at most 16 emojis per line.
+- ${ENVELOPE}`
 
 export const RETRY_NOTE = "Do not quote the text: write only the result that stands for what it asks."
 
@@ -61,12 +68,18 @@ export const echoes = (code: string, text: string): boolean => {
   return t.length > 12 && code.replace(/\s+/g, ' ').toLowerCase().includes(t)
 }
 
-export const clean = (raw: string): string =>
-  raw
-    .replace(/^```[a-z]*\n?/i, '')
+// Keeps what the model put between <out> and </out>; a reply without them is a remark, not a result.
+export const clean = (raw: string): string => {
+  const open = raw.indexOf('<out>')
+  if (open < 0) return ''
+  const close = raw.indexOf('</out>', open)
+  return raw
+    .slice(open + '<out>'.length, close < 0 ? undefined : close)
+    .replace(/^\s*```[a-z]*\n?/i, '')
     .replace(/\n?```\s*$/i, '')
     .split('\n')
     .map(l => Array.from(l.replace(/\s+$/, '')).slice(0, 120).join(''))
     .slice(0, 16)
     .join('\n')
     .trim()
+}
