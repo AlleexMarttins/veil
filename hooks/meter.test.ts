@@ -25,6 +25,9 @@ test('a model style records the call usage the meter reads', async ($, on) => {
   expect(saved?.length).toBe(1)
   expect(saved?.[0]?.input).toBe(120)
   expect(saved?.[0]?.output).toBe(40)
+  // Kept on disk, so a reopened session draws the message as it was sent.
+  expect(Object.values(store.cache as Record<string, string>)).toEqual(['[OK] browser opened'])
+  expect(Object.values(store.sent as Record<string, { style: string }>)[0]?.style).toBe('log')
 })
 
 

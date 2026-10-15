@@ -21,7 +21,6 @@ const view = atom({ plugin: 'veil', key: 'view' } as const, 'main' as View)
 const revealed = atom({ plugin: 'veil', key: 'revealed' } as const, false)
 // Per message: whether the person clicked it open.
 const opened = atom({ plugin: 'veil', key: 'opened' } as const, false)
-const REVEAL_HREF = 'https://veil.invalid/reveal'
 
 // Clicks reach a mod only on the terminal's fullscreen renderer (/tui fullscreen).
 function canPress<E extends Pick<RenderInput, 'surface' | 'viewport'>>(e: E): e is E & { surface: 'terminal' } {
@@ -41,6 +40,12 @@ const trim = <T,>(record: Record<string, T>): Record<string, T> => {
   for (const k of keys.slice(0, Math.max(0, keys.length - KEEP))) delete record[k]
   return record
 }
+
+// A stored object with only the entries `isValue` accepts; anything else becomes empty.
+const asRecord = (raw: unknown, isValue: (v: unknown) => boolean): Record<string, unknown> =>
+  raw && typeof raw === 'object' && !Array.isArray(raw)
+    ? Object.fromEntries(Object.entries(raw as Record<string, unknown>).filter(([, v]) => isValue(v)))
+    : {}
 
 const hhmm = (ms: number) => {
   const d = new Date(ms)
@@ -66,6 +71,11 @@ export const register: Register = on => {
     await update($, settings, () => saved)
     const history = parseUsage(await $.store.get('usage'))
     await update($, usage, () => history)
+    // Translations and each message's style outlive the session, so a reopened one draws as it did.
+    const savedCache = asRecord(await $.store.get('cache'), v => typeof v === 'string')
+    await update($, cache, () => savedCache as Record<string, string>)
+    const savedSent = asRecord(await $.store.get('sent'), v => !!v && typeof v === 'object' && typeof (v as Sent).style === 'string')
+    await update($, sent, () => savedSent as Record<string, Sent>)
     const now = await $.clock.now()
     await update($, sessionStart, () => now)
 
@@ -331,7 +341,8 @@ export const register: Register = on => {
     const style = styleOf(s)
     const key = cacheKey(style.id, language.id, text)
     if (style.id !== 'off' && text.trim() !== '') {
-      await update($, sent, m => trim({ ...m, [text]: { style: style.id, lang: language.id } }))
+      const kept = await update($, sent, m => trim({ ...m, [text]: { style: style.id, lang: language.id } }))
+      await $.store.set('sent', kept)
     }
     const system = style.system
     if (system && text.trim() !== '' && !pending.has(key)) {
@@ -367,7 +378,8 @@ export const register: Register = on => {
             const code = clean(r.text)
             if (code === '' || echoes(code, text)) continue
 
-            await update($, cache, c => trim({ ...c, [key]: code }))
+            const kept = await update($, cache, c => trim({ ...c, [key]: code }))
+            await $.store.set('cache', kept)
             wrote = true
             break
           }
@@ -423,17 +435,15 @@ export const register: Register = on => {
     const open = memberOf(opened, e)
     const isOpen = await read($, open)
     const drawn = await next(isOpen ? e : veiled)
-    const { Box, Markdown } = $.ui.resolve(e)
+    const { Box, Button, Text } = $.ui.resolve(e)
 
+    // A one-glyph plain Button: a Markdown link would print its address beside the glyph.
     return (
       <Box flexDirection="row" alignItems="flex-end" gap={1}>
         {drawn}
-        <Markdown
-          key="veil-open"
-          text={`[${isOpen ? '◇' : '◆'}](${REVEAL_HREF})`}
-          pressableLinks={[REVEAL_HREF]}
-          onLinkPress={() => update($, open, was => !was)}
-        />
+        <Button key={`veil-open-${e.requestId}`} plain onPress={() => update($, open, was => !was)}>
+          <Text color={isOpen ? 'yellow' : 'cyan'}>{isOpen ? '◇' : '◆'}</Text>
+        </Button>
       </Box>
     )
   })

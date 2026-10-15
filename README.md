@@ -127,7 +127,7 @@ Offline styles never call a model and cost nothing.
 
 - Veil changes the drawing only. The transcript file, what Claude reads and what gets sent are untouched.
 - Model styles send your message to the model you pick, through your own Claude Code session and account, the same way your chat does.
-- Translations and the style of each message are kept for the current session. After a restart, older messages fall back to hexadecimal.
+- Translations and the style of each message are saved with Veil's data, so a reopened session draws your messages as they were. Veil keeps the latest 200.
 - To remove it: `/plugin uninstall veil`.
 
 ## Make your own style
