@@ -98,7 +98,7 @@ All three need Veil to go first. Claude Code runs mods in the order `enabledPlug
 }
 ```
 
-Restart Claude Code after changing it. If another mod draws your messages without passing them on, the symptom is the same: the token meter keeps counting while your messages show as typed. Moving Veil above it fixes that too.
+Use the ids your `enabledPlugins` actually holds: a copy installed from another marketplace, such as `cc-stretch@my-mods`, counts the same. Restart Claude Code after changing it. If another mod draws your messages without passing them on, the symptom is the same: the token meter keeps counting while your messages show as typed. Moving Veil above it fixes that too.
 
 ## Settings
 

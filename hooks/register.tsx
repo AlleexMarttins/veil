@@ -44,10 +44,22 @@ async function companions($: {
     const home = (await $.env.get('USERPROFILE')) ?? (await $.env.get('HOME')) ?? ''
     const enabled = (JSON.parse(await $.fs.read(`${home}/.claude/settings.json`)) as { enabledPlugins?: Record<string, boolean> })
       .enabledPlugins ?? {}
-    value.stretch = enabled['cc-stretch@cc-stretch'] === true
-    if (enabled['ui-themes@ui-themes'] === true) {
-      // The folder ui-themes itself reads: HOME, or the drive root where HOME is unset.
-      const dir = `${(await $.env.get('HOME')) ?? ''}/.claude/ui-themes`
+    // Any marketplace counts: a local copy (cc-stretch@my-mods) is the same mod.
+    const isOn = (mod: string) => Object.entries(enabled).some(([id, on]) => on === true && id.startsWith(`${mod}@`))
+    value.stretch = isOn('cc-stretch')
+    if (isOn('ui-themes')) {
+      // ui-themes reads HOME, falling back to USERPROFILE since its Windows fix; older copies use the
+      // drive root where HOME is unset. The first folder holding an active theme wins.
+      const home = await $.env.get('HOME')
+      const candidates = [`${home ?? (await $.env.get('USERPROFILE')) ?? ''}/.claude/ui-themes`, `${home ?? ''}/.claude/ui-themes`]
+      let dir = ''
+      for (const c of candidates) {
+        if (await $.fs.exists(`${c}/active`)) {
+          dir = c
+          break
+        }
+      }
+      if (!dir) throw new Error('no ui-themes folder')
       const name = (await $.fs.read(`${dir}/active`)).trim()
       const t = JSON.parse(await $.fs.read(`${dir}/${name}.json`)) as { prompt?: { bg?: string }; reply?: { bg?: string } }
       if (t.prompt?.bg && t.reply?.bg) value.theme = { prompt: t.prompt.bg, reply: t.reply.bg }
