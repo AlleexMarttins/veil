@@ -1,5 +1,5 @@
-import { atom, read, update } from 'claude-code'
-import type { Register, RenderChildren } from 'claude-code'
+import { atom, memberOf, read, update } from 'claude-code'
+import type { Register, RenderChildren, RenderInput } from 'claude-code'
 
 import type { Sent, Settings, UsageEntry, View } from '../types'
 import { LOCALES, localeOf, styleText, t } from './i18n'
@@ -19,6 +19,14 @@ const settings = atom({ plugin: 'veil', key: 'settings' } as const, DEFAULTS as 
 const sent = atom({ plugin: 'veil', key: 'sent' } as const, {} as Record<string, Sent>)
 const view = atom({ plugin: 'veil', key: 'view' } as const, 'main' as View)
 const revealed = atom({ plugin: 'veil', key: 'revealed' } as const, false)
+// Per message: whether the person clicked it open.
+const opened = atom({ plugin: 'veil', key: 'opened' } as const, false)
+const REVEAL_HREF = 'https://veil.invalid/reveal'
+
+// Clicks reach a mod only on the terminal's fullscreen renderer (/tui fullscreen).
+function canPress<E extends Pick<RenderInput, 'surface' | 'viewport'>>(e: E): e is E & { surface: 'terminal' } {
+  return e.surface === 'terminal' && e.viewport?.isFullscreen === true
+}
 const usage = atom({ plugin: 'veil', key: 'usage' } as const, [] as UsageEntry[])
 const sessionStart = atom({ plugin: 'veil', key: 'sessionStart' } as const, 0)
 
@@ -403,7 +411,31 @@ export const register: Register = on => {
     // The row is drawn while the model still works: hold a placeholder, not the hex fallback.
     const shown = found.isWaiting ? '⋯' : style.render(e.props.text, found.translated)
 
-    return shown === undefined ? next(e) : next({ ...e, props: { ...e.props, text: shown } })
+    if (shown === undefined) {
+      return next(e)
+    }
+    const veiled = { ...e, props: { ...e.props, text: shown } }
+    if (!canPress(e)) {
+      return next(veiled)
+    }
+
+    // The engine still draws the row; a diamond beside it opens this one message.
+    const open = memberOf(opened, e)
+    const isOpen = await read($, open)
+    const drawn = await next(isOpen ? e : veiled)
+    const { Box, Markdown } = $.ui.resolve(e)
+
+    return (
+      <Box flexDirection="row" alignItems="flex-end" gap={1}>
+        {drawn}
+        <Markdown
+          key="veil-open"
+          text={`[${isOpen ? '◇' : '◆'}](${REVEAL_HREF})`}
+          pressableLinks={[REVEAL_HREF]}
+          onLinkPress={() => update($, open, was => !was)}
+        />
+      </Box>
+    )
   })
 
   // The hint line under the prompt: the engine's hint on the left, the meter on the right.

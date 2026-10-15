@@ -62,8 +62,9 @@ Every message keeps the style it was sent with. Switching styles only changes wh
 
 ## Seeing the originals
 
-Three ways, all reversible:
+Four ways, all reversible:
 
+- Click the diamond at the end of a message to open that one message, and click it again to veil it. Clicks need Claude Code's fullscreen renderer: run `/tui fullscreen` once.
 - `ctrl+o` opens the full transcript with every message as typed.
 - `/reveal` shows or hides the originals in place.
 - `ctrl+x r` does the same as `/reveal`, once it is bound.
@@ -94,6 +95,8 @@ The fix is to let Veil go first. Claude Code runs mods in the order `enabledPlug
 ```
 
 Restart Claude Code afterwards. Veil then disguises the text and the theme paints it, so you keep both.
+
+Mods that only touch Claude's replies, such as [cc-stretch](https://github.com/pro-vi/cc-stretch), work next to Veil in any order. A theme that redraws replies can still get in their way, so list them above the theme as well.
 
 ## Settings
 

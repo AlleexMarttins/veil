@@ -33,6 +33,8 @@ declare module 'claude-code' {
       view: View
       sent: Record<string, Sent>
       revealed: boolean
+      /** Per message: whether the person clicked it open. */
+      opened: StateFamily<boolean>
       usage: UsageEntry[]
       sessionStart: number
     }
