@@ -26,6 +26,42 @@ const opened = atom({ plugin: 'veil', key: 'opened' } as const, false)
 function canPress<E extends Pick<RenderInput, 'surface' | 'viewport'>>(e: E): e is E & { surface: 'terminal' } {
   return e.surface === 'terminal' && e.viewport?.isFullscreen === true
 }
+
+// Other mods Veil draws alongside: ui-themes (its active colours) and cc-stretch (whether it is on).
+type Companions = { theme?: { prompt: string; reply: string }; stretch: boolean }
+let companionsCache: { at: number; value: Companions } | undefined
+const COMPANIONS_TTL_MS = 5000
+
+async function companions($: {
+  env: { get: (name: string) => Promise<string | undefined> }
+  fs: { read: (path: string) => Promise<string>; exists: (path: string) => Promise<boolean> }
+  clock: { now: () => Promise<number> }
+}): Promise<Companions> {
+  const now = await $.clock.now()
+  if (companionsCache && now - companionsCache.at < COMPANIONS_TTL_MS) return companionsCache.value
+  const value: Companions = { stretch: false }
+  try {
+    const home = (await $.env.get('USERPROFILE')) ?? (await $.env.get('HOME')) ?? ''
+    const enabled = (JSON.parse(await $.fs.read(`${home}/.claude/settings.json`)) as { enabledPlugins?: Record<string, boolean> })
+      .enabledPlugins ?? {}
+    value.stretch = enabled['cc-stretch@cc-stretch'] === true
+    if (enabled['ui-themes@ui-themes'] === true) {
+      // The folder ui-themes itself reads: HOME, or the drive root where HOME is unset.
+      const dir = `${(await $.env.get('HOME')) ?? ''}/.claude/ui-themes`
+      const name = (await $.fs.read(`${dir}/active`)).trim()
+      const t = JSON.parse(await $.fs.read(`${dir}/${name}.json`)) as { prompt?: { bg?: string }; reply?: { bg?: string } }
+      if (t.prompt?.bg && t.reply?.bg) value.theme = { prompt: t.prompt.bg, reply: t.reply.bg }
+    }
+  } catch {
+    // No settings or theme to read: draw as Claude Code does.
+  }
+  companionsCache = { at: now, value }
+  return value
+}
+
+// A reply cc-stretch draws by itself: it holds a {{short|long}} stretch.
+const hasStretch = (text: string): boolean => /\{\{[^{}|]+\|/.test(text)
+
 const usage = atom({ plugin: 'veil', key: 'usage' } as const, [] as UsageEntry[])
 const sessionStart = atom({ plugin: 'veil', key: 'sessionStart' } as const, 0)
 
@@ -431,19 +467,48 @@ export const register: Register = on => {
       return next(veiled)
     }
 
-    // The engine still draws the row; a diamond beside it opens this one message.
     const open = memberOf(opened, e)
     const isOpen = await read($, open)
-    const drawn = await next(isOpen ? e : veiled)
+    const toggle = () => update($, open, was => !was)
     const { Box, Button, Text } = $.ui.resolve(e)
+    const { theme } = await companions($)
 
+    // With ui-themes on, Veil draws the row in its box and colour, and the whole message is the button.
+    if (theme) {
+      return (
+        <Box backgroundColor={theme.prompt} paddingX={2} paddingY={1} marginTop={1}>
+          <Button key={`veil-open-${e.requestId}`} plain onPress={toggle}>
+            <Text>{isOpen ? e.props.text : shown}</Text>
+          </Button>
+        </Box>
+      )
+    }
+
+    // Otherwise the engine still draws the row, and a diamond beside it opens this one message.
     // A one-glyph plain Button: a Markdown link would print its address beside the glyph.
+    const drawn = await next(isOpen ? e : veiled)
     return (
       <Box flexDirection="row" alignItems="flex-end" gap={1}>
         {drawn}
-        <Button key={`veil-open-${e.requestId}`} plain onPress={() => update($, open, was => !was)}>
+        <Button key={`veil-open-${e.requestId}`} plain onPress={toggle}>
           <Text color={isOpen ? 'yellow' : 'cyan'}>{isOpen ? '◇' : '◆'}</Text>
         </Button>
+      </Box>
+    )
+  })
+
+  // cc-stretch draws a reply holding stretches by itself, so ui-themes never paints it; Veil adds the
+  // theme's reply box around it. Every other reply reaches ui-themes as before.
+  on('ui.render', { component: 'AssistantMessage' }, async ($, e, next) => {
+    const drawn = await next(e)
+    if (e.surface !== 'terminal' || !hasStretch(e.props.text)) return drawn
+    const { theme, stretch } = await companions($)
+    if (!theme || !stretch) return drawn
+    const { Box } = $.ui.resolve(e)
+
+    return (
+      <Box backgroundColor={theme.reply} paddingX={2} paddingY={1} marginTop={1}>
+        {drawn}
       </Box>
     )
   })

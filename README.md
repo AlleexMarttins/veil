@@ -64,7 +64,7 @@ Every message keeps the style it was sent with. Switching styles only changes wh
 
 Four ways, all reversible:
 
-- Click the diamond at the end of a message to open that one message, and click it again to veil it. Clicks need Claude Code's fullscreen renderer: run `/tui fullscreen` once.
+- Click a message to open that one message, and click it again to veil it. Without a theme mod, the click target is the diamond at the end of the message. Clicks need Claude Code's fullscreen renderer: run `/tui fullscreen` once.
 - `ctrl+o` opens the full transcript with every message as typed.
 - `/reveal` shows or hides the originals in place.
 - `ctrl+x r` does the same as `/reveal`, once it is bound.
@@ -83,20 +83,22 @@ The diamond at the right of the hint line tells you where you stand: cyan while 
 
 ## Using it with theme mods
 
-Some mods redraw your messages too. [ui-themes](https://github.com/yugal1107/ui-themes), for example, paints each of your messages in its own colored box and does not hand the drawing on to the mods after it. If such a mod runs before Veil, Veil never gets its turn and your messages show as typed, even though the token meter keeps counting.
+Veil is built to share the screen with [ui-themes](https://github.com/yugal1107/ui-themes) and [cc-stretch](https://github.com/pro-vi/cc-stretch).
 
-The fix is to let Veil go first. Claude Code runs mods in the order `enabledPlugins` lists them in `~/.claude/settings.json`, so put Veil above the theme:
+- With ui-themes on, Veil draws your messages in the theme's own box and colour, and on the fullscreen renderer the whole message becomes the reveal button.
+- cc-stretch draws a reply that holds stretches by itself, which used to leave it without the theme. Veil puts the theme's reply box around those replies, so every reply keeps its colour.
+
+All three need Veil to go first. Claude Code runs mods in the order `enabledPlugins` lists them in `~/.claude/settings.json`, so keep this order:
 
 ```json
 "enabledPlugins": {
   "veil@veil": true,
+  "cc-stretch@cc-stretch": true,
   "ui-themes@ui-themes": true
 }
 ```
 
-Restart Claude Code afterwards. Veil then disguises the text and the theme paints it, so you keep both.
-
-Mods that only touch Claude's replies, such as [cc-stretch](https://github.com/pro-vi/cc-stretch), work next to Veil in any order. A theme that redraws replies can still get in their way, so list them above the theme as well.
+Restart Claude Code after changing it. If another mod draws your messages without passing them on, the symptom is the same: the token meter keeps counting while your messages show as typed. Moving Veil above it fixes that too.
 
 ## Settings
 
